@@ -266,10 +266,6 @@ class NamedCache {
         return cache.size();
     }
 
-    public boolean isEmpty() {
-        return cache.isEmpty();
-    }
-
     synchronized Iterator<Map.Entry<Bytes, LRUNode>> subMapIterator(final Bytes from, final Bytes to) {
         return cache.subMap(from, true, to, true).entrySet().iterator();
     }

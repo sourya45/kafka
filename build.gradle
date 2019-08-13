@@ -473,6 +473,7 @@ subprojects {
     configFile = new File(rootDir, "checkstyle/checkstyle.xml")
     configProperties = checkstyleConfigProperties("import-control.xml")
     toolVersion = "$versions.checkstyle"
+    checkstyleTest.enabled = false
   }
 
   configure(checkstyleMain) {

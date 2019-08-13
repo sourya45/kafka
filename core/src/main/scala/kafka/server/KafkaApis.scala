@@ -59,7 +59,6 @@ import org.apache.kafka.common.message.DeleteTopicsResponseData.{DeletableTopicR
 import org.apache.kafka.common.message.DescribeGroupsResponseData
 import org.apache.kafka.common.message.ElectLeadersResponseData.PartitionResult
 import org.apache.kafka.common.message.ElectLeadersResponseData.ReplicaElectionResult
-import org.apache.kafka.common.message.ExpireDelegationTokenResponseData
 import org.apache.kafka.common.message.FindCoordinatorResponseData
 import org.apache.kafka.common.message.HeartbeatResponseData
 import org.apache.kafka.common.message.InitProducerIdResponseData
@@ -69,7 +68,6 @@ import org.apache.kafka.common.message.LeaveGroupResponseData.MemberResponse
 import org.apache.kafka.common.message.ListGroupsResponseData
 import org.apache.kafka.common.message.OffsetCommitRequestData
 import org.apache.kafka.common.message.OffsetCommitResponseData
-import org.apache.kafka.common.message.RenewDelegationTokenResponseData
 import org.apache.kafka.common.message.SaslAuthenticateResponseData
 import org.apache.kafka.common.message.SaslHandshakeResponseData
 import org.apache.kafka.common.message.SyncGroupResponseData
@@ -2463,11 +2461,7 @@ class KafkaApis(val requestChannel: RequestChannel,
       trace("Sending renew token response %s for correlation id %d to client %s."
         .format(request.header.correlationId, request.header.clientId))
       sendResponseMaybeThrottle(request, requestThrottleMs =>
-        new RenewDelegationTokenResponse(
-             new RenewDelegationTokenResponseData()
-               .setThrottleTimeMs(requestThrottleMs)
-               .setErrorCode(error.code)
-               .setExpiryTimestampMs(expiryTimestamp)))
+        new RenewDelegationTokenResponse(requestThrottleMs, error, expiryTimestamp))
     }
 
     if (!allowTokenRequests(request))
@@ -2475,8 +2469,8 @@ class KafkaApis(val requestChannel: RequestChannel,
     else {
       tokenManager.renewToken(
         request.session.principal,
-        ByteBuffer.wrap(renewTokenRequest.data.hmac),
-        renewTokenRequest.data.renewPeriodMs,
+        renewTokenRequest.hmac,
+        renewTokenRequest.renewTimePeriod(),
         sendResponseCallback
       )
     }
@@ -2490,11 +2484,7 @@ class KafkaApis(val requestChannel: RequestChannel,
       trace("Sending expire token response for correlation id %d to client %s."
         .format(request.header.correlationId, request.header.clientId))
       sendResponseMaybeThrottle(request, requestThrottleMs =>
-        new ExpireDelegationTokenResponse(
-            new ExpireDelegationTokenResponseData()
-              .setThrottleTimeMs(requestThrottleMs)
-              .setErrorCode(error.code)
-              .setExpiryTimestampMs(expiryTimestamp)))
+        new ExpireDelegationTokenResponse(requestThrottleMs, error, expiryTimestamp))
     }
 
     if (!allowTokenRequests(request))
